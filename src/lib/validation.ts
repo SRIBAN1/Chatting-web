@@ -3,6 +3,8 @@ import { z } from "zod";
 export const DISPLAY_NAME_MAX_LENGTH = 24;
 export const MESSAGE_MAX_LENGTH = 500;
 
+export const messageIdSchema = z.string().regex(/^(?:0|[1-9]\d{0,18})$/u);
+
 export const newMessageSchema = z
   .object({
     displayName: z
@@ -23,4 +25,3 @@ export const newMessageSchema = z
   })
   .strict();
 
-export const messageIdSchema = z.string().regex(/^(?:0|[1-9]\d{0,18})$/u);

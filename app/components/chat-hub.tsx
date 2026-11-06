@@ -44,6 +44,7 @@ async function readMessages(room: Room, actorId: string, beforeId?: string) {
 export function ChatHub() {
   const [room, setRoom] = useState<Room>("everyone");
   const [theme, setTheme] = useState<Theme>("light");
+  const [themeReady, setThemeReady] = useState(false);
   const [actorId, setActorId] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [nameDraft, setNameDraft] = useState("");
@@ -68,6 +69,7 @@ export function ChatHub() {
     try {
       const savedTheme = localStorage.getItem(THEME_KEY);
       if (savedTheme === "dark" || savedTheme === "light") setTheme(savedTheme);
+      setThemeReady(true);
       setDisplayName(localStorage.getItem(NAME_KEY) ?? "");
       let id = localStorage.getItem(ACTOR_KEY);
       if (!id) {
@@ -81,9 +83,10 @@ export function ChatHub() {
   }, []);
 
   useEffect(() => {
+    if (!themeReady) return;
     document.documentElement.dataset.theme = theme;
     try { localStorage.setItem(THEME_KEY, theme); } catch { /* Session-only preference. */ }
-  }, [theme]);
+  }, [theme, themeReady]);
 
   useEffect(() => {
     activeRoom.current = room;

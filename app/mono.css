@@ -143,3 +143,83 @@ body { background: var(--mono-bg); color: var(--mono-ink); }
   .mono-spin { animation:none; }
   .mono-room-link,.mono-composer,.mono-tool-button { transition:none; }
 }
+
+
+/* Theme switch */
+.mono-theme-toggle {
+  display:inline-flex; min-height:34px; flex:0 0 auto; align-items:center; justify-content:center; gap:7px;
+  padding:0 11px; border:1px solid #e3e3e1; border-radius:9px; color:#333; background:#fff;
+  font-size:10px; font-weight:700; cursor:pointer; transition:background .18s,border-color .18s,color .18s;
+}
+.mono-theme-toggle:hover { border-color:#aaa; background:#f5f5f3; }
+[data-theme="dark"] { color-scheme:dark; --mono-bg:#101010; --mono-panel:#181818; --mono-ink:#f3f3f3; --mono-muted:#aaa; --mono-line:#303030; --mono-soft:#202020; --mono-dark:#f5f5f5; }
+[data-theme="dark"] body,
+[data-theme="dark"] .mono-app { color:#f1f1f1; background:#101010; }
+[data-theme="dark"] .mono-sidebar,
+[data-theme="dark"] .mono-header,
+[data-theme="dark"] .mono-composer-wrap { border-color:#2d2d2d; background:#171717; }
+[data-theme="dark"] .mono-brand,
+[data-theme="dark"] .mono-mobile-brand { color:#f4f4f4; }
+[data-theme="dark"] .mono-brand-mark { color:#111; background:#f3f3f3; }
+[data-theme="dark"] .mono-room-link { color:#bcbcbc; }
+[data-theme="dark"] .mono-room-link:hover,
+[data-theme="dark"] .mono-room-link.active { border-color:#3b3b3b; color:#fff; background:#242424; }
+[data-theme="dark"] .mono-room-icon,
+[data-theme="dark"] .mono-sidebar-note,
+[data-theme="dark"] .mono-status,
+[data-theme="dark"] .mono-welcome,
+[data-theme="dark"] .mono-bubble,
+[data-theme="dark"] .mono-emoji-picker,
+[data-theme="dark"] .mono-reaction,
+[data-theme="dark"] .mono-error,
+[data-theme="dark"] .mono-name-form { border-color:#353535; color:#e9e9e9; background:#1d1d1d; }
+[data-theme="dark"] .mono-room-label small,
+[data-theme="dark"] .mono-sidebar-note p,
+[data-theme="dark"] .mono-heading p,
+[data-theme="dark"] .mono-welcome p,
+[data-theme="dark"] .mono-message-meta time,
+[data-theme="dark"] .mono-reply-quote p,
+[data-theme="dark"] .mono-footnote,
+[data-theme="dark"] .mono-empty { color:#999; }
+[data-theme="dark"] .mono-heading h1,
+[data-theme="dark"] .mono-welcome h2,
+[data-theme="dark"] .mono-message-meta strong,
+[data-theme="dark"] .mono-empty strong { color:#f4f4f4; }
+[data-theme="dark"] .mono-active-dot { background:#f5f5f5; }
+[data-theme="dark"] .mono-avatar,
+[data-theme="dark"] .mono-message-avatar { color:#111; background:#e8e8e8; }
+[data-theme="dark"] .mono-edit-name,
+[data-theme="dark"] .mono-tool-button,
+[data-theme="dark"] .mono-replying button { color:#aaa; }
+[data-theme="dark"] .mono-edit-name:hover,
+[data-theme="dark"] .mono-tool-button:hover { border-color:#444; color:#fff; background:#242424; }
+[data-theme="dark"] .mono-reply-quote,
+[data-theme="dark"] .mono-replying { border-color:#777; background:#252525; }
+[data-theme="dark"] .mono-reply-quote span,
+[data-theme="dark"] .mono-replying span { color:#ddd; }
+[data-theme="dark"] .mono-emoji-picker { box-shadow:0 8px 25px #0008; }
+[data-theme="dark"] .mono-emoji-picker button:hover { background:#333; }
+[data-theme="dark"] .mono-reaction:hover,
+[data-theme="dark"] .mono-reaction.reacted { border-color:#eee; color:#fff; background:#383838; }
+[data-theme="dark"] .mono-reaction small { color:#bbb; }
+[data-theme="dark"] .mono-reaction.reacted small { color:#fff; }
+[data-theme="dark"] .mono-composer { border-color:#3a3a3a; background:#202020; }
+[data-theme="dark"] .mono-composer:focus-within { border-color:#888; box-shadow:0 0 0 3px #ffffff0b; }
+[data-theme="dark"] .mono-composer textarea,
+[data-theme="dark"] .mono-name-form input { border-color:#414141; color:#f4f4f4; background:#171717; }
+[data-theme="dark"] .mono-composer textarea::placeholder { color:#888; }
+[data-theme="dark"] .mono-composer-bottom button,
+[data-theme="dark"] .mono-name-form button { border-color:#eee; color:#111; background:#eee; }
+[data-theme="dark"] .mono-composer-bottom button:hover:not(:disabled),
+[data-theme="dark"] .mono-name-form button:hover:not(:disabled) { color:#fff; background:#222; }
+[data-theme="dark"] .mono-theme-toggle { border-color:#454545; color:#f2f2f2; background:#242424; }
+[data-theme="dark"] .mono-theme-toggle:hover { border-color:#777; background:#333; }
+[data-theme="dark"] .mono-load-older { border-color:#393939; color:#ddd; background:#1b1b1b; }
+[data-theme="dark"] .mono-load-older:hover { border-color:#777; color:#fff; }
+[data-theme="dark"] .mono-name-form label { color:#ccc; }
+@media (max-width:760px) {
+  .mono-theme-toggle { min-height:30px; gap:5px; padding:0 8px; font-size:9px; }
+}
+@media (prefers-reduced-motion:reduce) {
+  .mono-theme-toggle { transition:none; }
+}

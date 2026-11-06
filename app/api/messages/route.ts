@@ -37,7 +37,7 @@ function normalizeMessage(row: DatabaseMessage): PublicMessage {
     displayName: row.displayName,
     content: row.content,
     createdAt: new Date(row.createdAt).toISOString(),
-    replyTo: row.replyToId && row.replyToName !== null && row.replyToContent !== null
+    replyTo: row.replyToId && typeof row.replyToName === "string" && typeof row.replyToContent === "string"
       ? { id: row.replyToId, displayName: row.replyToName, content: row.replyToContent }
       : null,
   };

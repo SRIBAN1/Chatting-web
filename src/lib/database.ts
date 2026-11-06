@@ -28,6 +28,7 @@ export async function ensureChatSchema() {
           content VARCHAR(500) NOT NULL CHECK (length(btrim(content)) > 0),
           created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
         )`,
+        sql`ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS reply_to_id BIGINT REFERENCES chat_messages(id)`,
         sql`CREATE TABLE IF NOT EXISTS chat_room_counters (
           room_key TEXT PRIMARY KEY,
           next_id BIGINT NOT NULL CHECK (next_id > 0)

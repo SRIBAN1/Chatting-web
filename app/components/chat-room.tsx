@@ -22,6 +22,7 @@ import {
   MessageCircle,
   MessagesSquare,
   RefreshCw,
+  Reply,
   Send,
   ShieldCheck,
   UserRound,
@@ -36,6 +37,7 @@ type ChatMessage = {
   displayName: string;
   content: string;
   createdAt: string;
+  replyTo?: { id: string; displayName: string; content: string } | null;
 };
 
 type MessagePage = {
@@ -130,6 +132,7 @@ export function ChatRoom() {
   const [isEditingName, setIsEditingName] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [draft, setDraft] = useState("");
+  const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null);
   const [connection, setConnection] = useState<ConnectionState>("connecting");
   const [connectionError, setConnectionError] = useState("");
   const [sendError, setSendError] = useState("");
@@ -277,7 +280,7 @@ export function ChatRoom() {
       const response = await fetch("/api/messages", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ displayName: cleanName, content }),
+        body: JSON.stringify({ displayName: cleanName, content, replyToId: replyingTo?.id ?? null }),
       });
       const payload = (await response.json().catch(() => null)) as
         | { message?: ChatMessage; error?: string }
@@ -296,6 +299,7 @@ export function ChatRoom() {
       latestMessageId.current = payload.message.id;
       setMessages((existing) => mergeMessages(existing, [payload.message as ChatMessage]));
       setDraft("");
+      setReplyingTo(null);
       pinnedToBottom.current = true;
       setSendError("");
     } catch {
@@ -305,7 +309,7 @@ export function ChatRoom() {
     } finally {
       setSending(false);
     }
-  }, [displayName, draft, sending]);
+  }, [displayName, draft, replyingTo, sending]);
 
   const handleComposerKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
@@ -498,7 +502,24 @@ export function ChatRoom() {
                             {formatTime(message.createdAt)}
                           </time>
                         </div>
+                        {message.replyTo && (
+                          <div className="reply-context" aria-label={`Reply to ${message.replyTo.displayName}`}>
+                            <span>Replying to {message.replyTo.displayName}</span>
+                            <p>{message.replyTo.content}</p>
+                          </div>
+                        )}
                         <p className="message-bubble">{message.content}</p>
+                        <button
+                          className="message-reply-button"
+                          type="button"
+                          onClick={() => {
+                            setReplyingTo(message);
+                            document.getElementById("chat-message")?.focus();
+                          }}
+                          aria-label={`Reply to ${message.displayName}'s message`}
+                        >
+                          <Reply size={13} /> Reply
+                        </button>
                       </div>
                     </article>
                   </Fragment>
@@ -519,6 +540,17 @@ export function ChatRoom() {
                   void sendMessage();
                 }}
               >
+                {replyingTo && (
+                  <div className="reply-composer">
+                    <div className="reply-composer-copy">
+                      <span>Replying to {replyingTo.displayName}</span>
+                      <p>{replyingTo.content}</p>
+                    </div>
+                    <button className="icon-button reply-cancel" type="button" onClick={() => setReplyingTo(null)} aria-label="Cancel reply">
+                      <X size={16} />
+                    </button>
+                  </div>
+                )}
                 <label className="sr-only" htmlFor="chat-message">Write a message</label>
                 <textarea
                   id="chat-message"

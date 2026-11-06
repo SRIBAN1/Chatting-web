@@ -14,6 +14,9 @@ type DatabaseMessage = {
   displayName: string;
   content: string;
   createdAt: string | Date;
+  replyToId?: string | null;
+  replyToName?: string | null;
+  replyToContent?: string | null;
 };
 
 type PublicMessage = {
@@ -21,6 +24,7 @@ type PublicMessage = {
   displayName: string;
   content: string;
   createdAt: string;
+  replyTo?: { id: string; displayName: string; content: string } | null;
 };
 
 function jsonResponse(body: unknown, status = 200) {
@@ -33,6 +37,9 @@ function normalizeMessage(row: DatabaseMessage): PublicMessage {
     displayName: row.displayName,
     content: row.content,
     createdAt: new Date(row.createdAt).toISOString(),
+    replyTo: row.replyToId && row.replyToName !== null && row.replyToContent !== null
+      ? { id: row.replyToId, displayName: row.replyToName, content: row.replyToContent }
+      : null,
   };
 }
 
@@ -65,25 +72,34 @@ export async function GET(request: NextRequest) {
 
     if (beforeId) {
       rows = (await sql`
-        SELECT id::text AS id, display_name AS "displayName", content, created_at AS "createdAt"
-        FROM chat_messages
-        WHERE id < ${beforeId}::bigint
-        ORDER BY id DESC
+        SELECT message.id::text AS id, message.display_name AS "displayName", message.content,
+          message.created_at AS "createdAt", parent.id::text AS "replyToId",
+          parent.display_name AS "replyToName", parent.content AS "replyToContent"
+        FROM chat_messages AS message
+        LEFT JOIN chat_messages AS parent ON parent.id = message.reply_to_id
+        WHERE message.id < ${beforeId}::bigint
+        ORDER BY message.id DESC
         LIMIT ${limit + 1}
       `) as unknown as DatabaseMessage[];
     } else if (afterId) {
       rows = (await sql`
-        SELECT id::text AS id, display_name AS "displayName", content, created_at AS "createdAt"
-        FROM chat_messages
-        WHERE id > ${afterId}::bigint
-        ORDER BY id ASC
+        SELECT message.id::text AS id, message.display_name AS "displayName", message.content,
+          message.created_at AS "createdAt", parent.id::text AS "replyToId",
+          parent.display_name AS "replyToName", parent.content AS "replyToContent"
+        FROM chat_messages AS message
+        LEFT JOIN chat_messages AS parent ON parent.id = message.reply_to_id
+        WHERE message.id > ${afterId}::bigint
+        ORDER BY message.id ASC
         LIMIT ${limit + 1}
       `) as unknown as DatabaseMessage[];
     } else {
       rows = (await sql`
-        SELECT id::text AS id, display_name AS "displayName", content, created_at AS "createdAt"
-        FROM chat_messages
-        ORDER BY id DESC
+        SELECT message.id::text AS id, message.display_name AS "displayName", message.content,
+          message.created_at AS "createdAt", parent.id::text AS "replyToId",
+          parent.display_name AS "replyToName", parent.content AS "replyToContent"
+        FROM chat_messages AS message
+        LEFT JOIN chat_messages AS parent ON parent.id = message.reply_to_id
+        ORDER BY message.id DESC
         LIMIT ${limit + 1}
       `) as unknown as DatabaseMessage[];
     }
@@ -126,13 +142,24 @@ export async function POST(request: NextRequest) {
         SET next_id = next_id + 1
         WHERE room_key = 'lobby'
         RETURNING (next_id - 1)::text AS id
+      ), inserted AS (
+        INSERT INTO chat_messages (id, display_name, content, created_at, reply_to_id)
+        SELECT allocated.id::bigint, ${parsed.data.displayName}, ${parsed.data.content}, clock_timestamp(),
+          CASE WHEN ${parsed.data.replyToId ?? null}::bigint IS NULL THEN NULL
+            ELSE (SELECT id FROM chat_messages WHERE id = ${parsed.data.replyToId ?? null}::bigint)
+          END
+        FROM allocated
+        WHERE ${parsed.data.replyToId ?? null}::bigint IS NULL
+          OR EXISTS (SELECT 1 FROM chat_messages WHERE id = ${parsed.data.replyToId ?? null}::bigint)
+        RETURNING id, display_name, content, created_at, reply_to_id
       )
-      INSERT INTO chat_messages (id, display_name, content, created_at)
-      SELECT allocated.id::bigint, ${parsed.data.displayName}, ${parsed.data.content}, clock_timestamp()
-      FROM allocated
-      RETURNING id::text AS id, display_name AS "displayName", content, created_at AS "createdAt"
+      SELECT inserted.id::text AS id, inserted.display_name AS "displayName", inserted.content,
+        inserted.created_at AS "createdAt", parent.id::text AS "replyToId",
+        parent.display_name AS "replyToName", parent.content AS "replyToContent"
+      FROM inserted LEFT JOIN chat_messages AS parent ON parent.id = inserted.reply_to_id
     `) as unknown as DatabaseMessage[];
 
+    if (!row) return jsonResponse({ error: "The message you are replying to no longer exists." }, 404);
     return jsonResponse({ message: normalizeMessage(row) }, 201);
   } catch {
     return jsonResponse(

@@ -22,4 +22,4 @@ export const newMessageSchema = z
   })
   .strict();
 
-export const messageIdSchema = z.string().regex(/^[1-9]\d{0,18}$/u);
+export const messageIdSchema = z.string().regex(/^(?:0|[1-9]\d{0,18})$/u);

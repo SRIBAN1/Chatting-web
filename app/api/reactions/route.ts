@@ -25,23 +25,23 @@ export async function POST(request: NextRequest) {
   try {
     await ensureChatSchema();
     const sql = getSql();
-    const [message] = await sql\`
-      SELECT id FROM chat_messages WHERE id = \${messageId.data}::bigint AND room_key = \${room.data}
-    \`;
+    const [message] = await sql`
+      SELECT id FROM chat_messages WHERE id = ${messageId.data}::bigint AND room_key = ${room.data}
+    `;
     if (!message) return NextResponse.json({ error: "Message not found in this room." }, { status: 404 });
 
-    await sql\`
+    await sql`
       WITH removed AS (
         DELETE FROM chat_message_reactions
-        WHERE message_id = \${messageId.data}::bigint
-          AND emoji = \${emoji.data} AND actor_id = \${actorId.data}::uuid
+        WHERE message_id = ${messageId.data}::bigint
+          AND emoji = ${emoji.data} AND actor_id = ${actorId.data}::uuid
         RETURNING id
       )
       INSERT INTO chat_message_reactions (message_id, room_key, emoji, actor_id)
-      SELECT \${messageId.data}::bigint, \${room.data}, \${emoji.data}, \${actorId.data}::uuid
+      SELECT ${messageId.data}::bigint, ${room.data}, ${emoji.data}, ${actorId.data}::uuid
       WHERE NOT EXISTS (SELECT 1 FROM removed)
       ON CONFLICT (message_id, emoji, actor_id) DO NOTHING
-    \`;
+    `;
     return NextResponse.json({ success: true }, { headers: { "Cache-Control": "no-store" } });
   } catch {
     return NextResponse.json({ error: "The reaction could not be saved. Check the database connection." }, { status: 503 });

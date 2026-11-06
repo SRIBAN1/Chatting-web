@@ -1,8 +1,9 @@
 "use client";
 
-import { FormEvent, KeyboardEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { FormEvent, KeyboardEvent } from "react";
 import {
-  ArrowUpRight, Hash, LoaderCircle, MessageCircle, MessageSquare, Reply, Send,
+  ArrowUpRight, LoaderCircle, MessageCircle, MessageSquare, Reply, Send,
   SmilePlus, Users, Wifi, WifiOff, X,
 } from "lucide-react";
 import { DISPLAY_NAME_MAX_LENGTH, MESSAGE_MAX_LENGTH } from "@/src/lib/validation";
@@ -43,6 +44,7 @@ export function ChatHub() {
   const [actorId, setActorId] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [nameDraft, setNameDraft] = useState("");
+  const [editingName, setEditingName] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [draft, setDraft] = useState("");
   const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null);
@@ -83,7 +85,11 @@ export function ChatHub() {
     try {
       const page = await readMessages(currentRoom, currentActor);
       if (activeRoom.current !== currentRoom) return;
-      setMessages(page.messages);
+      setMessages((current) => {
+        const firstId = page.messages[0]?.id;
+        const older = firstId ? current.filter((item) => BigInt(item.id) < BigInt(firstId)) : [];
+        return [...older, ...page.messages];
+      });
       setHasOlder(page.hasMore);
       setConnected(true);
       setError("");
@@ -123,6 +129,7 @@ export function ChatHub() {
     const clean = nameDraft.trim();
     if (!clean || clean.length > DISPLAY_NAME_MAX_LENGTH) return;
     setDisplayName(clean);
+    setEditingName(false);
     try { localStorage.setItem(NAME_KEY, clean); } catch { /* Name remains active for this session. */ }
   };
 
@@ -221,7 +228,7 @@ export function ChatHub() {
         <div className="mono-profile">
           <div className="mono-avatar">{displayName ? getInitials(displayName) : "?"}</div>
           <div className="mono-profile-copy"><small>CHATTING AS</small><strong>{displayName || "Guest"}</strong></div>
-          <button type="button" className="mono-edit-name" onClick={() => setNameDraft(displayName)} aria-label="Edit display name"><ArrowUpRight size={16} /></button>
+          <button type="button" className="mono-edit-name" onClick={() => { setNameDraft(displayName); setEditingName(true); }} aria-label="Edit display name"><ArrowUpRight size={16} /></button>
         </div>
       </aside>
 
@@ -294,7 +301,7 @@ export function ChatHub() {
         <footer className="mono-composer-wrap">
           {replyingTo && <div className="mono-replying"><div><small>REPLYING TO {replyingTo.displayName.toUpperCase()}</small><span>{replyingTo.content}</span></div>
             <button type="button" onClick={() => setReplyingTo(null)} aria-label="Cancel reply"><X size={16} /></button></div>}
-          {displayName ? <form className="mono-composer" onSubmit={(event) => { event.preventDefault(); void sendMessage(); }}>
+          {displayName && !editingName ? <form className="mono-composer" onSubmit={(event) => { event.preventDefault(); void sendMessage(); }}>
             <label className="sr-only" htmlFor="mono-message">Write a message</label>
             <textarea id="mono-message" value={draft} maxLength={MESSAGE_MAX_LENGTH} rows={1}
               onChange={(event) => setDraft(event.target.value)} onKeyDown={onComposerKeyDown}

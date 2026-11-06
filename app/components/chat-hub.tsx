@@ -3,8 +3,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { FormEvent, KeyboardEvent } from "react";
 import {
-  ArrowUpRight, LoaderCircle, MessageCircle, MessageSquare, Reply, Send,
-  SmilePlus, Users, Wifi, WifiOff, X,
+  ArrowUpRight, LoaderCircle, MessageCircle, MessageSquare, Moon, Reply, Send,
+  SmilePlus, Sun, Users, Wifi, WifiOff, X,
 } from "lucide-react";
 import { DISPLAY_NAME_MAX_LENGTH, MESSAGE_MAX_LENGTH } from "@/src/lib/validation";
 
@@ -22,6 +22,8 @@ const ROOMS: { id: Room; title: string; description: string }[] = [
 const EMOJIS = ["👍", "❤️", "😂", "😮", "😢", "🔥"];
 const NAME_KEY = "chatting-web.display-name";
 const ACTOR_KEY = "chatting-web.reaction-actor";
+type Theme = "light" | "dark";
+const THEME_KEY = "chatting-web.theme";
 
 function getInitials(name: string) {
   return name.trim().split(/\s+/u).slice(0, 2).map((part) => [...part][0] ?? "").join("").toUpperCase();
@@ -41,6 +43,7 @@ async function readMessages(room: Room, actorId: string, beforeId?: string) {
 
 export function ChatHub() {
   const [room, setRoom] = useState<Room>("everyone");
+  const [theme, setTheme] = useState<Theme>("light");
   const [actorId, setActorId] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [nameDraft, setNameDraft] = useState("");
@@ -63,6 +66,8 @@ export function ChatHub() {
 
   useEffect(() => {
     try {
+      const savedTheme = localStorage.getItem(THEME_KEY);
+      if (savedTheme === "dark" || savedTheme === "light") setTheme(savedTheme);
       setDisplayName(localStorage.getItem(NAME_KEY) ?? "");
       let id = localStorage.getItem(ACTOR_KEY);
       if (!id) {
@@ -74,6 +79,11 @@ export function ChatHub() {
       setActorId(crypto.randomUUID());
     }
   }, []);
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    try { localStorage.setItem(THEME_KEY, theme); } catch { /* Session-only preference. */ }
+  }, [theme]);
 
   useEffect(() => {
     activeRoom.current = room;
@@ -240,6 +250,9 @@ export function ChatHub() {
             <h1>{selectedRoom.title}</h1>
             <p>{room === "everyone" ? "One conversation, open to everyone." : "A separate space for another conversation."}</p>
           </div>
+          <button type="button" className="mono-theme-toggle" onClick={() => setTheme((value) => value === "light" ? "dark" : "light")} aria-label={theme === "light" ? "Switch to dark mode" : "Switch to light mode"}>
+            {theme === "light" ? <Moon size={15} /> : <Sun size={15} />}<span>{theme === "light" ? "Dark" : "Light"}</span>
+          </button>
           <div className={"mono-status " + (connected ? "is-online" : "is-offline")}>
             {connected ? <Wifi size={14} /> : <WifiOff size={14} />}
             {connected ? "Connected" : "Reconnecting"}

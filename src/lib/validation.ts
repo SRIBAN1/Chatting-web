@@ -11,6 +11,7 @@ export const newMessageSchema = z
       .min(1, "Choose a display name.")
       .max(DISPLAY_NAME_MAX_LENGTH, `Names must be ${DISPLAY_NAME_MAX_LENGTH} characters or fewer.`)
       .regex(/^[^\u0000-\u001F\u007F]+$/u, "Names cannot contain control characters."),
+    replyToId: messageIdSchema.nullable().optional(),
     content: z
       .string()
       .trim()

@@ -5,17 +5,18 @@ import "@fontsource/manrope/700.css";
 import "@fontsource/space-mono/400.css";
 import "@fontsource/space-mono/700.css";
 import "./globals.css";
+import "./mono.css";
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 
 export const metadata: Metadata = {
-  title: "The Lobby — Chatting Web",
-  description: "A shared chat room. Choose a name, join the conversation, and come back to the saved history any time.",
+  title: "Chatting Web — Two rooms, one conversation",
+  description: "Choose Everyone or Ours and join the conversation.",
   applicationName: "Chatting Web",
   icons: { icon: "/chat-mark.svg" },
   openGraph: {
-    title: "The Lobby — Chatting Web",
-    description: "A shared room for whatever is on your mind.",
+    title: "Chatting Web",
+    description: "Two rooms, one conversation.",
     type: "website",
   },
 };
@@ -23,13 +24,9 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#100d1c",
+  themeColor: "#ffffff",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
-  return (
-    <html lang="en">
-      <body>{children}</body>
-    </html>
-  );
+  return <html lang="en"><body>{children}</body></html>;
 }

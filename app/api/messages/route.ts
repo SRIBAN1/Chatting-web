@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
     const common = (cursorClause: "before" | "after" | "all") => cursorClause;
     void common;
     if (beforeId) {
-      rows = await sql\`
+      rows = await sql`
         SELECT m.id::text AS id, m.display_name AS "displayName", m.content, m.created_at AS "createdAt",
           p.id::text AS "replyToId", p.display_name AS "replyToName", p.content AS "replyToContent",
           COALESCE(r.reactions, '[]'::json) AS reactions
@@ -67,14 +67,14 @@ export async function GET(request: NextRequest) {
         LEFT JOIN chat_messages p ON p.id = m.reply_to_id AND p.room_key = m.room_key
         LEFT JOIN LATERAL (
           SELECT json_agg(json_build_object('emoji', g.emoji, 'count', g.n, 'reacted', g.reacted)) AS reactions
-          FROM (SELECT emoji, COUNT(*)::int AS n, COALESCE(BOOL_OR(actor_id = \${actorId}::uuid), false) AS reacted
+          FROM (SELECT emoji, COUNT(*)::int AS n, COALESCE(BOOL_OR(actor_id = ${actorId}::uuid), false) AS reacted
             FROM chat_message_reactions WHERE message_id = m.id GROUP BY emoji) g
         ) r ON TRUE
-        WHERE m.room_key = \${room.data} AND m.id < \${beforeId}::bigint
-        ORDER BY m.id DESC LIMIT \${limit + 1}
-      \` as unknown as DatabaseMessage[];
+        WHERE m.room_key = ${room.data} AND m.id < ${beforeId}::bigint
+        ORDER BY m.id DESC LIMIT ${limit + 1}
+      ` as unknown as DatabaseMessage[];
     } else if (afterId) {
-      rows = await sql\`
+      rows = await sql`
         SELECT m.id::text AS id, m.display_name AS "displayName", m.content, m.created_at AS "createdAt",
           p.id::text AS "replyToId", p.display_name AS "replyToName", p.content AS "replyToContent",
           COALESCE(r.reactions, '[]'::json) AS reactions
@@ -82,14 +82,14 @@ export async function GET(request: NextRequest) {
         LEFT JOIN chat_messages p ON p.id = m.reply_to_id AND p.room_key = m.room_key
         LEFT JOIN LATERAL (
           SELECT json_agg(json_build_object('emoji', g.emoji, 'count', g.n, 'reacted', g.reacted)) AS reactions
-          FROM (SELECT emoji, COUNT(*)::int AS n, COALESCE(BOOL_OR(actor_id = \${actorId}::uuid), false) AS reacted
+          FROM (SELECT emoji, COUNT(*)::int AS n, COALESCE(BOOL_OR(actor_id = ${actorId}::uuid), false) AS reacted
             FROM chat_message_reactions WHERE message_id = m.id GROUP BY emoji) g
         ) r ON TRUE
-        WHERE m.room_key = \${room.data} AND m.id > \${afterId}::bigint
-        ORDER BY m.id ASC LIMIT \${limit + 1}
-      \` as unknown as DatabaseMessage[];
+        WHERE m.room_key = ${room.data} AND m.id > ${afterId}::bigint
+        ORDER BY m.id ASC LIMIT ${limit + 1}
+      ` as unknown as DatabaseMessage[];
     } else {
-      rows = await sql\`
+      rows = await sql`
         SELECT m.id::text AS id, m.display_name AS "displayName", m.content, m.created_at AS "createdAt",
           p.id::text AS "replyToId", p.display_name AS "replyToName", p.content AS "replyToContent",
           COALESCE(r.reactions, '[]'::json) AS reactions
@@ -97,12 +97,12 @@ export async function GET(request: NextRequest) {
         LEFT JOIN chat_messages p ON p.id = m.reply_to_id AND p.room_key = m.room_key
         LEFT JOIN LATERAL (
           SELECT json_agg(json_build_object('emoji', g.emoji, 'count', g.n, 'reacted', g.reacted)) AS reactions
-          FROM (SELECT emoji, COUNT(*)::int AS n, COALESCE(BOOL_OR(actor_id = \${actorId}::uuid), false) AS reacted
+          FROM (SELECT emoji, COUNT(*)::int AS n, COALESCE(BOOL_OR(actor_id = ${actorId}::uuid), false) AS reacted
             FROM chat_message_reactions WHERE message_id = m.id GROUP BY emoji) g
         ) r ON TRUE
-        WHERE m.room_key = \${room.data}
-        ORDER BY m.id DESC LIMIT \${limit + 1}
-      \` as unknown as DatabaseMessage[];
+        WHERE m.room_key = ${room.data}
+        ORDER BY m.id DESC LIMIT ${limit + 1}
+      ` as unknown as DatabaseMessage[];
     }
     const hasMore = rows.length > limit;
     const page = rows.slice(0, limit);
@@ -122,25 +122,25 @@ export async function POST(request: NextRequest) {
   try {
     await ensureChatSchema();
     const sql = getSql();
-    const [row] = await sql\`
+    const [row] = await sql`
       WITH allocated AS (
         UPDATE chat_room_counters SET next_id = next_id + 1
         WHERE room_key = 'global' RETURNING (next_id - 1)::text AS id
       ), inserted AS (
         INSERT INTO chat_messages (id, display_name, content, created_at, reply_to_id, room_key)
-        SELECT a.id::bigint, \${parsed.data.displayName}, \${parsed.data.content}, clock_timestamp(),
-          CASE WHEN \${parsed.data.replyToId ?? null}::bigint IS NULL THEN NULL
-            ELSE (SELECT id FROM chat_messages WHERE id = \${parsed.data.replyToId ?? null}::bigint AND room_key = \${parsed.data.room}) END,
-          \${parsed.data.room}
+        SELECT a.id::bigint, ${parsed.data.displayName}, ${parsed.data.content}, clock_timestamp(),
+          CASE WHEN ${parsed.data.replyToId ?? null}::bigint IS NULL THEN NULL
+            ELSE (SELECT id FROM chat_messages WHERE id = ${parsed.data.replyToId ?? null}::bigint AND room_key = ${parsed.data.room}) END,
+          ${parsed.data.room}
         FROM allocated a
-        WHERE \${parsed.data.replyToId ?? null}::bigint IS NULL
-          OR EXISTS (SELECT 1 FROM chat_messages WHERE id = \${parsed.data.replyToId ?? null}::bigint AND room_key = \${parsed.data.room})
+        WHERE ${parsed.data.replyToId ?? null}::bigint IS NULL
+          OR EXISTS (SELECT 1 FROM chat_messages WHERE id = ${parsed.data.replyToId ?? null}::bigint AND room_key = ${parsed.data.room})
         RETURNING id, display_name, content, created_at, reply_to_id
       )
       SELECT i.id::text AS id, i.display_name AS "displayName", i.content, i.created_at AS "createdAt",
         p.id::text AS "replyToId", p.display_name AS "replyToName", p.content AS "replyToContent"
       FROM inserted i LEFT JOIN chat_messages p ON p.id = i.reply_to_id
-    \` as unknown as DatabaseMessage[];
+    ` as unknown as DatabaseMessage[];
     if (!row) return jsonResponse({ error: "The message you are replying to no longer exists in this room." }, 404);
     return jsonResponse({ message: normalizeMessage(row) }, 201);
   } catch {

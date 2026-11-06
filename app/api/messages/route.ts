@@ -32,13 +32,17 @@ function jsonResponse(body: unknown, status = 200) {
 }
 
 function normalizeMessage(row: DatabaseMessage): PublicMessage {
+  const replyToId = row.replyToId;
+  const replyToName = row.replyToName;
+  const replyToContent = row.replyToContent;
+
   return {
     id: String(row.id),
     displayName: row.displayName,
     content: row.content,
     createdAt: new Date(row.createdAt).toISOString(),
-    replyTo: row.replyToId && typeof row.replyToName === "string" && typeof row.replyToContent === "string"
-      ? { id: row.replyToId, displayName: row.replyToName, content: row.replyToContent }
+    replyTo: replyToId && replyToName != null && replyToContent != null
+      ? { id: replyToId, displayName: replyToName, content: replyToContent }
       : null,
   };
 }

@@ -1,5 +1,5 @@
-import { ChatRoom } from "./components/chat-room";
+import { ChatHub } from "./components/chat-hub";
 
 export default function HomePage() {
-  return <ChatRoom />;
+  return <ChatHub />;
 }
